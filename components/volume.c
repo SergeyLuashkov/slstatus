@@ -193,7 +193,7 @@
 		snd_mixer_selem_id_t *mixid = NULL;
 		snd_mixer_elem_t *elem = NULL;
 		long min = 0, max = 0, volume = -1;
-		int err;
+		int err, sw1, sw2;
 
 		if ((err = snd_mixer_open(&mixer, 0))) {
 			warn("snd_mixer_open: %d", err);
@@ -229,13 +229,19 @@
 		if ((err = snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_MONO, &volume))) {
 			warn("snd_mixer_selem_get_playback_volume(): %d", err);
 		}
+		if ((err = snd_mixer_selem_get_playback_switch(elem, 0, &sw1))) {
+			warn("snd_mixer_selem_get_playback_switch(): %d", err);
+		}
+		if ((err = snd_mixer_selem_get_playback_switch(elem, 1, &sw2))) {
+			warn("snd_mixer_selem_get_playback_switch(): %d", err);
+		}
 
 	cleanup:
 		snd_mixer_free(mixer);
 		snd_mixer_detach(mixer, devname);
 		snd_mixer_close(mixer);
 
-		return volume == -1 ? NULL : bprintf("%.0f", (volume-min)*100./(max-min));
+		return !(sw1 || sw2) ? "mute" : volume == -1 ? NULL : bprintf("%.0f", (volume-min)*100./(max-min));
 	}
 #else
 	#include <sys/soundcard.h>
